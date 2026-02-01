@@ -1,0 +1,130 @@
+services:
+  init-perms:
+    image: alpine:3.18
+    command: >-
+      sh -c "mkdir -p /work/data/bronze/app /work/data/delta/events /work/data/spark-events /work/tmp /work/airflow/logs && chmod -R 777 /work/data /work/tmp /work/airflow/logs"
+    volumes:
+      - ./:/work
+
+  web:
+    build: ./web
+    env_file: .env
+    environment:
+      AUTH_MODE: ${AUTH_MODE:-off}
+      USE_MINIO: ${USE_MINIO:-false}
+      DATA_DIR: /data
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_BUCKET: logs
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      SUPABASE_ISSUER: ${SUPABASE_ISSUER:-}
+      SUPABASE_AUD: ${SUPABASE_AUD:-}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    volumes:
+      - ./data:/data
+      - ./tmp:/tmp
+    depends_on:
+      init-perms:
+        condition: service_completed_successfully
+      minio:
+        condition: service_started
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - ./data/minio:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >-
+      sh -c "until mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}; do sleep 2; done; mc mb -p local/logs; mc anonymous set none local/logs; exit 0"
+
+  spark-master:
+    image: apache/spark:3.4.1
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_MASTER_PORT: 7077
+      SPARK_MASTER_WEBUI_PORT: 8080
+    ports:
+      - "7077:7077"
+      - "${SPARK_UI_PORT:-18080}:8080"
+    volumes:
+      - ./data:/data
+      - ./tmp:/tmp
+      - ./data/spark-events:/opt/spark/spark-events
+    depends_on:
+      init-perms:
+        condition: service_completed_successfully
+
+  spark-worker:
+    image: apache/spark:3.4.1
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_WORKER_MEMORY: 1G
+      SPARK_WORKER_CORES: 1
+      SPARK_WORKER_WEBUI_PORT: 8081
+    depends_on:
+      spark-master:
+        condition: service_started
+    volumes:
+      - ./data:/data
+      - ./tmp:/tmp
+      - ./data/spark-events:/opt/spark/spark-events
+
+  spark-history:
+    image: apache/spark:3.4.1
+    command: >-
+      sh -c "mkdir -p /opt/spark/spark-events && /opt/spark/bin/spark-class org.apache.spark.deploy.history.HistoryServer"
+    environment:
+      SPARK_HISTORY_OPTS: "-Dspark.history.fs.logDirectory=/opt/spark/spark-events -Dspark.history.ui.port=18081"
+    ports:
+      - "${SPARK_HISTORY_PORT:-18081}:18081"
+    depends_on:
+      spark-master:
+        condition: service_started
+    volumes:
+      - ./data/spark-events:/opt/spark/spark-events
+
+  airflow:
+    build: ./airflow
+    env_file: .env
+    environment:
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__WEBSERVER__PORT: 8080
+      AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/logs
+      AIRFLOW__SCHEDULER__HEALTH_CHECK_SERVER_PORT: 8794
+      SPARK_HOME: /opt/spark
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+    ports:
+      - "${AIRFLOW_PORT:-8082}:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./spark:/opt/airflow/spark
+      - ./data:/data
+      - ./tmp:/opt/airflow/tmp
+      - ./data/spark-events:/opt/spark/spark-events
+    depends_on:
+      init-perms:
+        condition: service_completed_successfully
+      spark-master:
+        condition: service_started
+    command: >-
+      bash -c "airflow db init
+      && airflow users create --username ${AIRFLOW_ADMIN_USER:-admin} --password ${AIRFLOW_ADMIN_PASSWORD:-admin} --firstname Admin --lastname User --role Admin --email admin@example.com || true
+      && python -c 'import sqlite3; conn=sqlite3.connect(\"/opt/airflow/airflow.db\"); cur=conn.cursor(); cur.execute(\"SELECT id FROM connection WHERE conn_id = ?\", (\"spark_default\",)); row=cur.fetchone(); (cur.execute(\"UPDATE connection SET conn_type = ?, host = ?, port = ? WHERE conn_id = ?\", (\"spark\", \"spark://spark-master\", 7077, \"spark_default\")) if row else cur.execute(\"INSERT INTO connection (conn_id, conn_type, host, port) VALUES (?, ?, ?, ?)\", (\"spark_default\", \"spark\", \"spark://spark-master\", 7077))); conn.commit(); conn.close()'
+      ; airflow scheduler & airflow webserver"
