@@ -19,37 +19,40 @@ export function DayCard({ day, title, status, onClick, className }: DayCardProps
       onClick={isClickable ? onClick : undefined}
       disabled={!isClickable}
       className={cn(
-        "relative w-full p-6 rounded-2xl transition-all duration-300 text-left group",
+        "w-full p-6 rounded-2xl text-left",
         "border-2 shadow-card",
-        status === "completed" && "bg-success/10 border-success/30 hover:shadow-card-hover",
-        status === "available" && "bg-card border-primary/20 hover:border-primary hover:shadow-card-hover hover:-translate-y-1",
+        "transition-all duration-200 ease-out",
+        status === "completed" && "bg-success/10 border-success/30",
+        status === "available" && "bg-card border-primary/20 hover:border-primary hover:translate-y-[-4px] hover:shadow-lg",
         status === "locked" && "bg-muted/50 border-muted cursor-not-allowed opacity-60",
         className
       )}
     >
-      {/* Day Badge */}
-      <div className={cn(
-        "absolute -top-3 left-6 px-4 py-1 rounded-full text-sm font-semibold",
-        status === "completed" && "bg-success text-success-foreground",
-        status === "available" && "bg-primary text-primary-foreground",
-        status === "locked" && "bg-muted-foreground/30 text-muted-foreground"
-      )}>
-        Day {day}
-      </div>
+      {/* Card Content */}
+      <div className="flex items-center justify-between gap-4">
+        {/* Left: Day Badge + Title */}
+        <div className="flex items-center gap-4">
+          <div className={cn(
+            "px-4 py-1 rounded-full text-sm font-semibold",
+            status === "completed" && "bg-success text-success-foreground",
+            status === "available" && "bg-primary text-primary-foreground",
+            status === "locked" && "bg-muted-foreground/30 text-muted-foreground"
+          )}>
+            Day {day}
+          </div>
+          <h3 className={cn(
+            "text-lg font-semibold",
+            status === "locked" && "text-muted-foreground"
+          )}>
+            {title}
+          </h3>
+        </div>
 
-      <div className="flex items-center justify-between mt-2">
-        <h3 className={cn(
-          "text-lg font-semibold pr-4",
-          status === "locked" && "text-muted-foreground"
-        )}>
-          {title}
-        </h3>
-
-        {/* Status Icon */}
+        {/* Right: Status Icon */}
         <div className={cn(
-          "flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300",
+          "flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center",
           status === "completed" && "bg-success text-success-foreground",
-          status === "available" && "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground",
+          status === "available" && "bg-primary/10 text-primary",
           status === "locked" && "bg-muted text-muted-foreground"
         )}>
           {status === "completed" && <Check className="w-6 h-6" />}
@@ -58,20 +61,29 @@ export function DayCard({ day, title, status, onClick, className }: DayCardProps
         </div>
       </div>
 
-      {/* Progress Indicator for available */}
-      {status === "available" && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span>시작 가능</span>
-        </div>
-      )}
+      {/* Status Text */}
+      <div className="mt-4">
+        {status === "available" && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-2 h-2 rounded-full bg-primary" />
+            <span>시작 가능</span>
+          </div>
+        )}
 
-      {status === "completed" && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-success">
-          <Check className="w-4 h-4" />
-          <span>완료됨</span>
-        </div>
-      )}
+        {status === "completed" && (
+          <div className="flex items-center gap-2 text-sm text-success">
+            <Check className="w-4 h-4" />
+            <span>완료됨</span>
+          </div>
+        )}
+
+        {status === "locked" && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Lock className="w-4 h-4" />
+            <span>이전 Day를 완료해주세요</span>
+          </div>
+        )}
+      </div>
     </button>
   );
 }

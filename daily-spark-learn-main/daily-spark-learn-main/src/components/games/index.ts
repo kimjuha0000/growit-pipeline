@@ -1,0 +1,10 @@
+export { Day1Game } from "./Day1Game";
+export { Day2Game } from "./Day2Game";
+export { Day3Game } from "./Day3Game";
+export { Day4Game } from "./Day4Game";
+export { Day5Game } from "./Day5Game";
+export { Day6Game } from "./Day6Game";
+export { Day7Game } from "./Day7Game";
+export { Day8Game } from "./Day8Game";
+export { Day9Game } from "./Day9Game";
+export { Day10Game } from "./Day10Game";

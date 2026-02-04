@@ -19,7 +19,6 @@ export default function Curriculum() {
 
   const getDayStatus = (day: number): DayStatus => {
     if (completedDays.includes(day)) return "completed";
-    // Day 1 is always available, or if previous day is completed
     if (day === 1 || completedDays.includes(day - 1)) return "available";
     return "locked";
   };
@@ -37,7 +36,7 @@ export default function Curriculum() {
 
       <main className="container py-12">
         {/* Course Header */}
-        <div className="max-w-2xl mx-auto mb-12 text-center animate-fade-in">
+        <div className="max-w-2xl mx-auto mb-12 text-center">
           <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
             <BookOpen className="w-10 h-10 text-primary" />
           </div>
@@ -55,26 +54,21 @@ export default function Curriculum() {
           />
         </div>
 
-        {/* Day Cards Grid */}
-        <div className="max-w-2xl mx-auto space-y-6">
-          {curriculum.days.map((day, index) => (
-            <div
+        {/* Day Cards List */}
+        <div className="max-w-2xl mx-auto space-y-4">
+          {curriculum.days.map((day) => (
+            <DayCard
               key={day.day}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <DayCard
-                day={day.day}
-                title={day.title}
-                status={getDayStatus(day.day)}
-                onClick={() => handleDayClick(day.day)}
-              />
-            </div>
+              day={day.day}
+              title={day.title}
+              status={getDayStatus(day.day)}
+              onClick={() => handleDayClick(day.day)}
+            />
           ))}
         </div>
 
         {/* Login Prompt */}
-        <div className="max-w-2xl mx-auto mt-12 p-6 bg-accent/50 rounded-2xl text-center animate-fade-in" style={{ animationDelay: '0.5s' }}>
+        <div className="max-w-2xl mx-auto mt-12 p-6 bg-accent/50 rounded-2xl text-center">
           <p className="text-muted-foreground mb-2">
             💡 진행 상황을 저장하려면 로그인하세요
           </p>

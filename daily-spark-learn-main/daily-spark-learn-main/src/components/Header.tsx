@@ -6,8 +6,9 @@ export function Header() {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg">
+    <header className="w-full border-b border-border bg-background">
       <div className="container flex h-16 items-center justify-between">
+        {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-lg">G</span>
@@ -15,6 +16,7 @@ export function Header() {
           <span className="font-bold text-xl text-foreground">GrowIt</span>
         </Link>
 
+        {/* Navigation */}
         <nav className="flex items-center gap-4">
           <Button
             variant="ghost"

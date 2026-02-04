@@ -5,18 +5,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-base font-semibold ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-base font-semibold ring-offset-background transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] shadow-md hover:shadow-lg",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border-2 border-primary bg-transparent text-primary hover:bg-primary/10 active:scale-[0.98]",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.98]",
+        default: "bg-primary text-primary-foreground hover:bg-primary-dark hover:translate-y-[-2px]",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:translate-y-[-2px]",
+        outline: "border-2 border-primary bg-transparent text-primary hover:bg-primary/10 hover:translate-y-[-2px]",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:translate-y-[-2px]",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        hero: "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] shadow-lg hover:shadow-xl animate-pulse-glow text-lg",
-        success: "bg-success text-success-foreground hover:bg-success/90 active:scale-[0.98] shadow-md",
+        hero: "bg-primary text-primary-foreground hover:bg-primary-dark hover:translate-y-[-2px] text-lg shadow-card hover:shadow-lg",
+        success: "bg-success text-success-foreground hover:bg-success/90 hover:translate-y-[-2px]",
       },
       size: {
         default: "h-12 px-6 py-3",

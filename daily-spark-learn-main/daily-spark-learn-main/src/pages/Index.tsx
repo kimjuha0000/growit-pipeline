@@ -29,25 +29,32 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Hero Section */}
       <Hero />
+      
+      {/* How It Works Section */}
       <HowItWorks />
 
       {/* Features Section */}
-      <section className="py-20">
+      <section className="py-20 bg-background">
         <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">
-            왜 GrowIt인가요?
-          </h2>
-          <p className="text-muted-foreground text-center mb-12 max-w-md mx-auto">
-            기존 강의 플랫폼과는 다른 접근
-          </p>
+          {/* Section Header */}
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              왜 GrowIt인가요?
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              기존 강의 플랫폼과는 다른 접근
+            </p>
+          </div>
 
+          {/* Features Grid */}
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {features.map((feature, index) => (
+            {features.map((feature) => (
               <div
                 key={feature.title}
-                className="text-center p-6 animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className="text-center p-6"
               >
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                   <feature.icon className="w-8 h-8 text-primary" />
@@ -61,7 +68,7 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 gradient-hero">
+      <section className="py-20 bg-accent/30">
         <div className="container">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -76,17 +83,17 @@ const Index = () => {
               variant="hero"
               size="xl"
               onClick={() => navigate("/curriculum")}
-              className="group"
+              className="gap-2"
             >
               무료로 시작하기
-              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-5 h-5" />
             </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-10 border-t border-border">
+      <footer className="py-10 bg-background border-t border-border">
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">

@@ -26,18 +26,18 @@ export function MissionCard({ mission, hint, onComplete, className }: MissionCar
 
   return (
     <div className={cn(
-      "bg-card rounded-2xl p-6 md:p-8 shadow-card border-2 border-primary/20 transition-all duration-300",
-      isCompleted && "border-success/50 bg-success/5",
+      "bg-card rounded-2xl p-6 md:p-8 border-2 transition-all duration-200 ease-out",
+      isCompleted ? "border-success/50 bg-success/5" : "border-primary/20",
       className
     )}>
       {/* Mission Header */}
       <div className="flex items-start gap-4 mb-6">
         <div className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors",
+          "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ease-out",
           isCompleted ? "bg-success/20" : "bg-primary/10"
         )}>
           {isCompleted ? (
-            <Check className="w-6 h-6 text-success animate-scale-in" />
+            <Check className="w-6 h-6 text-success animate-check-bounce" />
           ) : (
             <Lightbulb className="w-6 h-6 text-primary" />
           )}
@@ -56,8 +56,8 @@ export function MissionCard({ mission, hint, onComplete, className }: MissionCar
           placeholder="여기에 답변을 작성해주세요..."
           disabled={isCompleted}
           className={cn(
-            "w-full p-4 rounded-xl border-2 border-border bg-background resize-none h-32 transition-all duration-200",
-            "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
+            "w-full p-4 rounded-xl border-2 border-border bg-background resize-none h-32",
+            "focus:outline-none focus:border-primary",
             "placeholder:text-muted-foreground/50",
             isCompleted && "opacity-60 cursor-not-allowed"
           )}
@@ -74,7 +74,7 @@ export function MissionCard({ mission, hint, onComplete, className }: MissionCar
             💡 {showHint ? "힌트 숨기기" : "힌트 보기"}
           </button>
           {showHint && (
-            <p className="mt-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg animate-fade-in">
+            <p className="mt-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
               {hint}
             </p>
           )}

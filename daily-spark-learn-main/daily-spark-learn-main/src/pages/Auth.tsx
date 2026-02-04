@@ -27,19 +27,19 @@ export default function Auth() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container py-12 flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <div className="w-full max-w-md animate-fade-in">
+      <main className="container py-12">
+        <div className="max-w-md mx-auto">
           {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8"
           >
             <ArrowLeft className="w-4 h-4" />
             뒤로 가기
           </button>
 
           {/* Auth Card */}
-          <div className="bg-card rounded-3xl p-8 md:p-10 shadow-card">
+          <div className="bg-card rounded-3xl p-8 md:p-10 border border-border">
             {/* Header */}
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -71,8 +71,7 @@ export default function Auth() {
                   required
                   className={cn(
                     "w-full px-4 py-3 rounded-xl border-2 border-border bg-background",
-                    "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
-                    "transition-all duration-200"
+                    "focus:outline-none focus:border-primary"
                   )}
                 />
               </div>
@@ -91,8 +90,7 @@ export default function Auth() {
                   minLength={6}
                   className={cn(
                     "w-full px-4 py-3 rounded-xl border-2 border-border bg-background",
-                    "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
-                    "transition-all duration-200"
+                    "focus:outline-none focus:border-primary"
                   )}
                 />
               </div>
@@ -137,7 +135,7 @@ export default function Auth() {
               <div className="h-px flex-1 bg-border" />
             </div>
 
-            {/* Social Login - placeholder */}
+            {/* Social Login */}
             <Button variant="outline" size="lg" className="w-full" disabled>
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
