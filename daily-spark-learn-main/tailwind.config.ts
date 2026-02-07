@@ -103,6 +103,11 @@ export default {
           "50%": { transform: "scale(1.1)" },
           "100%": { transform: "scale(1)" },
         },
+        "shake": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "20%, 60%": { transform: "translateX(-4px)" },
+          "40%, 80%": { transform: "translateX(4px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
