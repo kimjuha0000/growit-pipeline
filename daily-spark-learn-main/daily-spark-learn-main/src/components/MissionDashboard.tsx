@@ -10,10 +10,12 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { type DayMission, type MissionStep, type QuizStep } from "@/lib/missionContent";
+import { type DayMission, type MissionStep, type QuizStep, type LocalizedText } from "@/lib/missionContent";
 import { FigmaUILocator } from "@/components/FigmaUILocator";
 import { KeyboardShortcut } from "@/components/KeyboardShortcut";
 import { Troubleshooter } from "@/components/Troubleshooter";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations";
 import confetti from "canvas-confetti";
 
 interface MissionDashboardProps {
@@ -22,6 +24,7 @@ interface MissionDashboardProps {
 }
 
 export function MissionDashboard({ mission, onComplete }: MissionDashboardProps) {
+  const { t, language } = useLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [selectedQuizOption, setSelectedQuizOption] = useState<number | null>(null);
@@ -33,6 +36,9 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
   const activeStep = mission.steps[currentStep];
   const isLastStep = currentStep === totalSteps - 1;
   const allCompleted = completedSteps.length === totalSteps;
+
+  // Helper to translate LocalizedText
+  const getText = (text: LocalizedText): string => text[language];
 
   useEffect(() => {
     if (allCompleted) {
@@ -142,7 +148,7 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
             <CheckCircle2 className="w-5 h-5 text-success-foreground" />
           </div>
           <p className="text-foreground/80 line-through decoration-success/50">
-            {step.type === "action" ? step.instruction : (step as QuizStep).question}
+            {step.type === "action" ? getText(step.instruction) : getText((step as QuizStep).question)}
           </p>
         </button>
       );
@@ -177,7 +183,7 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
                 <CircleDot className="w-5 h-5 text-primary" />
               )}
               <span className="text-sm font-medium text-muted-foreground">
-                {step.type === "quiz" ? "퀴즈" : "액션"}
+                {step.type === "quiz" ? t({ ko: "퀴즈", en: "Quiz" }) : t({ ko: "액션", en: "Action" })}
               </span>
             </div>
           </div>
@@ -194,9 +200,11 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
           <div className="md:col-span-2 aspect-video bg-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center">
             <Image className="w-12 h-12 text-muted-foreground/40 mb-3" />
             <p className="text-muted-foreground/60 text-sm font-medium text-center px-4">
-              {step.imageAlt}
+              {getText(step.imageAlt)}
             </p>
-            <p className="text-muted-foreground/40 text-xs mt-1">스크린샷 위치</p>
+            <p className="text-muted-foreground/40 text-xs mt-1">
+              {t({ ko: "스크린샷 위치", en: "Screenshot location" })}
+            </p>
           </div>
 
           {/* UI Locator Minimap */}
@@ -207,12 +215,12 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
 
         {/* Instruction / Question */}
         <p className="text-lg md:text-xl font-medium text-center mb-6 leading-relaxed">
-          {step.type === "action" ? step.instruction : (step as QuizStep).question}
+          {step.type === "action" ? getText(step.instruction) : getText((step as QuizStep).question)}
         </p>
 
         {/* Troubleshooter Accordion */}
         {step.troubleshootTip && (
-          <Troubleshooter tip={step.troubleshootTip} className="mb-6" />
+          <Troubleshooter tip={getText(step.troubleshootTip)} className="mb-6" />
         )}
 
         {/* Action Button or Quiz Options */}
@@ -229,12 +237,12 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
             {isCompleted ? (
               <>
                 <CheckCircle2 className="w-5 h-5 mr-2" />
-                완료!
+                {t({ ko: "완료!", en: "Done!" })}
               </>
             ) : (
               <>
                 <Sparkles className="w-5 h-5 mr-2" />
-                {step.buttonText}
+                {getText(step.buttonText)}
               </>
             )}
           </Button>
@@ -256,7 +264,7 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
                     : "border-muted hover:border-primary/50 hover:bg-muted/50"
                 )}
               >
-                {option}
+                {getText(option)}
               </button>
             ))}
 
@@ -265,7 +273,7 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
               <div className="mt-4 p-4 rounded-xl bg-success/10 border border-success/30 animate-fade-in">
                 <p className="text-success font-medium flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5" />
-                  {(step as QuizStep).successMessage}
+                  {getText((step as QuizStep).successMessage)}
                 </p>
               </div>
             )}
@@ -282,9 +290,9 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-lg font-bold text-foreground">
-              Day {mission.day}: {mission.title}
+              Day {mission.day}: {getText(mission.title)}
             </h2>
-            <p className="text-sm text-muted-foreground">{mission.subtitle}</p>
+            <p className="text-sm text-muted-foreground">{getText(mission.subtitle)}</p>
           </div>
           <div className="text-right">
             <span className="text-2xl font-bold text-primary">
@@ -308,12 +316,14 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
             <div className="w-20 h-20 bg-success rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="w-10 h-10 text-success-foreground" />
             </div>
-            <h2 className="text-3xl font-bold mb-2">Day {mission.day} 클리어! 🎉</h2>
+            <h2 className="text-3xl font-bold mb-2">
+              Day {mission.day} {t({ ko: "클리어!", en: "Complete!" })} 🎉
+            </h2>
             <p className="text-muted-foreground mb-6">
-              {mission.title} 미션을 완료했습니다!
+              {getText(mission.title)} {t({ ko: "미션을 완료했습니다!", en: "mission completed!" })}
             </p>
             <Button size="lg" onClick={onComplete} className="w-full">
-              계속하기
+              {t({ ko: "계속하기", en: "Continue" })}
             </Button>
           </div>
         </div>

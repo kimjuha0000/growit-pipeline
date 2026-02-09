@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Check, Lock, Play } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type DayStatus = "completed" | "available" | "locked";
 
@@ -12,6 +13,7 @@ interface DayCardProps {
 }
 
 export function DayCard({ day, title, status, onClick, className }: DayCardProps) {
+  const { t } = useLanguage();
   const isClickable = status !== "locked";
 
   return (
@@ -66,21 +68,21 @@ export function DayCard({ day, title, status, onClick, className }: DayCardProps
         {status === "available" && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="w-2 h-2 rounded-full bg-primary" />
-            <span>시작 가능</span>
+            <span>{t({ ko: "시작 가능", en: "Available" })}</span>
           </div>
         )}
 
         {status === "completed" && (
           <div className="flex items-center gap-2 text-sm text-success">
             <Check className="w-4 h-4" />
-            <span>완료됨</span>
+            <span>{t({ ko: "완료됨", en: "Completed" })}</span>
           </div>
         )}
 
         {status === "locked" && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Lock className="w-4 h-4" />
-            <span>이전 Day를 완료해주세요</span>
+            <span>{t({ ko: "이전 Day를 완료해주세요", en: "Complete the previous Day" })}</span>
           </div>
         )}
       </div>

@@ -1,9 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { User } from "lucide-react";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations";
 
 export function Header() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <header className="w-full border-b border-border bg-background">
@@ -17,13 +21,14 @@ export function Header() {
         </Link>
 
         {/* Navigation */}
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-2">
+          <LanguageToggle />
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate("/curriculum")}
           >
-            학습하기
+            {t(translations.header.learn)}
           </Button>
           <Button
             variant="outline"
@@ -32,7 +37,7 @@ export function Header() {
             className="gap-2"
           >
             <User className="w-4 h-4" />
-            로그인
+            {t(translations.header.login)}
           </Button>
         </nav>
       </div>

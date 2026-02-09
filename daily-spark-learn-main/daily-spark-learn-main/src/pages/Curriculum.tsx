@@ -5,13 +5,19 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { figmaCurriculum, getProgress } from "@/lib/curriculum";
 import { useNavigate } from "react-router-dom";
 import { BookOpen } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { type LocalizedText } from "@/lib/missionContent";
 
 type DayStatus = "completed" | "available" | "locked";
 
 export default function Curriculum() {
   const navigate = useNavigate();
+  const { language, t } = useLanguage();
   const [completedDays, setCompletedDays] = useState<number[]>([]);
   const curriculum = figmaCurriculum;
+
+  // Helper to get text from LocalizedText
+  const getText = (text: LocalizedText): string => text[language];
 
   useEffect(() => {
     setCompletedDays(getProgress(curriculum.id));
@@ -41,10 +47,10 @@ export default function Curriculum() {
             <BookOpen className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            {curriculum.title}
+            {getText(curriculum.title)}
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            {curriculum.description}
+            {getText(curriculum.description)}
           </p>
 
           <ProgressBar
@@ -60,7 +66,7 @@ export default function Curriculum() {
             <DayCard
               key={day.day}
               day={day.day}
-              title={day.title}
+              title={getText(day.title)}
               status={getDayStatus(day.day)}
               onClick={() => handleDayClick(day.day)}
             />
@@ -70,13 +76,13 @@ export default function Curriculum() {
         {/* Login Prompt */}
         <div className="max-w-2xl mx-auto mt-12 p-6 bg-accent/50 rounded-2xl text-center">
           <p className="text-muted-foreground mb-2">
-            💡 진행 상황을 저장하려면 로그인하세요
+            {t({ ko: "💡 진행 상황을 저장하려면 로그인하세요", en: "💡 Log in to save your progress" })}
           </p>
           <button 
             onClick={() => navigate("/auth")}
             className="text-primary font-medium hover:underline"
           >
-            로그인하기 →
+            {t({ ko: "로그인하기 →", en: "Log in →" })}
           </button>
         </div>
       </main>

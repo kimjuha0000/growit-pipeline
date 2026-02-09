@@ -1,32 +1,51 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { CourseSelectionModal } from "@/components/CourseSelectionModal";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations";
 
 export function Hero() {
   const navigate = useNavigate();
+  const [showCourseModal, setShowCourseModal] = useState(false);
+  const { t } = useLanguage();
+
+  const handleCourseSelect = (courseId: string) => {
+    if (courseId === "figma") {
+      setShowCourseModal(false);
+      navigate("/curriculum");
+    }
+  };
 
   return (
+    <>
+      <CourseSelectionModal 
+        open={showCourseModal} 
+        onOpenChange={setShowCourseModal}
+        onSelectCourse={handleCourseSelect}
+      />
     <section className="bg-accent/30 py-24 md:py-32">
       <div className="container">
         <div className="max-w-3xl mx-auto text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-8">
             <Sparkles className="w-4 h-4" />
-            <span>하루 5분 · 10일 완성</span>
+            <span>{t(translations.hero.badge)}</span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-            하루 5분으로,
+            {t(translations.hero.headline1)}
             <br />
-            <span className="text-primary">부담 없이 시작해,</span>
+            <span className="text-primary">{t(translations.hero.headline2)}</span>
             <br />
-            어느새 해낸 학습
+            {t(translations.hero.headline3)}
           </h1>
 
           {/* Sub Headline */}
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto">
-            하루 5분씩, 필요한 것만 남깁니다.
+            {t(translations.hero.subheadline)}
           </p>
 
           {/* CTA Button */}
@@ -34,14 +53,14 @@ export function Hero() {
             <Button
               variant="hero"
               size="xl"
-              onClick={() => navigate("/curriculum")}
+              onClick={() => setShowCourseModal(true)}
               className="gap-2"
             >
-              오늘 5분 시작하기
+              {t(translations.hero.cta)}
               <ArrowRight className="w-5 h-5" />
             </Button>
             <p className="text-sm text-muted-foreground">
-              로그인 없이 바로 시작 가능
+              {t(translations.hero.ctaNote)}
             </p>
           </div>
         </div>
@@ -57,7 +76,7 @@ export function Hero() {
               >
                 <div className="text-xs font-medium text-primary mb-1">Day {day}</div>
                 <div className="text-sm font-semibold text-foreground">
-                  {day === 1 ? "시작하기" : day === 2 ? "기본 익히기" : "실습하기"}
+                  {day === 1 ? t(translations.hero.day1) : day === 2 ? t(translations.hero.day2) : t(translations.hero.day3)}
                 </div>
               </div>
             ))}
@@ -65,5 +84,6 @@ export function Hero() {
         </div>
       </div>
     </section>
+    </>
   );
 }

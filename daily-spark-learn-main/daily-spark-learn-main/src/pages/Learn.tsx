@@ -6,15 +6,20 @@ import { CompletionCelebration } from "@/components/CompletionCelebration";
 import { figmaCurriculum, completeDay, getProgress } from "@/lib/curriculum";
 import { ArrowLeft, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { type LocalizedText } from "@/lib/missionContent";
 
 export default function Learn() {
   const { curriculumId, day } = useParams();
   const navigate = useNavigate();
+  const { language, t } = useLanguage();
   const [showCelebration, setShowCelebration] = useState(false);
 
   const dayNumber = parseInt(day || "1", 10);
   const curriculum = figmaCurriculum;
   const currentDay = curriculum.days.find((d) => d.day === dayNumber);
+
+  const getText = (text: LocalizedText): string => text[language];
 
   useEffect(() => {
     const progress = getProgress(curriculum.id);
@@ -52,7 +57,7 @@ export default function Learn() {
           className="gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          목록으로
+          {t({ ko: "목록으로", en: "Back to list" })}
         </Button>
       </div>
 
@@ -63,11 +68,11 @@ export default function Learn() {
             Day {dayNumber} / {curriculum.days.length}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold mb-2">
-            {currentDay.title}
+            {getText(currentDay.title)}
           </h1>
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Target className="w-4 h-4" />
-            <span>{currentDay.objective}</span>
+            <span>{getText(currentDay.objective)}</span>
           </div>
         </div>
 
