@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { CourseSelectionModal } from "@/components/CourseSelectionModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/translations";
+import { sendEvent } from "@/lib/logger";
 
 export function Hero() {
   const navigate = useNavigate();
@@ -12,10 +13,23 @@ export function Hero() {
   const { t } = useLanguage();
 
   const handleCourseSelect = (courseId: string) => {
+    void sendEvent("course_selected", {
+      source: "hero_course_modal",
+      course_id: courseId,
+    });
+
     if (courseId === "figma") {
       setShowCourseModal(false);
       navigate("/curriculum");
     }
+  };
+
+  const handleHeroCtaClick = () => {
+    void sendEvent("hero_cta_click", {
+      component: "Hero",
+      button_text: t(translations.hero.cta),
+    });
+    setShowCourseModal(true);
   };
 
   return (
@@ -53,7 +67,7 @@ export function Hero() {
             <Button
               variant="hero"
               size="xl"
-              onClick={() => setShowCourseModal(true)}
+              onClick={handleHeroCtaClick}
               className="gap-2"
             >
               {t(translations.hero.cta)}

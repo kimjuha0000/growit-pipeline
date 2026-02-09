@@ -16,6 +16,7 @@ import { KeyboardShortcut } from "@/components/KeyboardShortcut";
 import { Troubleshooter } from "@/components/Troubleshooter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/translations";
+import { sendEvent } from "@/lib/logger";
 import confetti from "canvas-confetti";
 
 interface MissionDashboardProps {
@@ -54,6 +55,14 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
   const handleActionComplete = () => {
     if (completedSteps.includes(currentStep)) return;
 
+    void sendEvent("mission_step_complete", {
+      mission_day: mission.day,
+      step_id: activeStep.id,
+      step_index: currentStep,
+      step_type: activeStep.type,
+      is_last_step: isLastStep,
+    });
+
     confetti({
       particleCount: 30,
       spread: 50,
@@ -64,6 +73,10 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
     setCompletedSteps((prev) => [...prev, currentStep]);
 
     if (isLastStep) {
+      void sendEvent("mission_completed", {
+        mission_day: mission.day,
+        total_steps: totalSteps,
+      });
       setTimeout(() => onComplete(), 1500);
     } else {
       setTimeout(() => {
@@ -80,8 +93,17 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
 
     setSelectedQuizOption(optionIndex);
     const quizStep = activeStep as QuizStep;
+    const isCorrect = optionIndex === quizStep.correctIndex;
 
-    if (optionIndex === quizStep.correctIndex) {
+    void sendEvent("mission_quiz_answer", {
+      mission_day: mission.day,
+      step_id: quizStep.id,
+      step_index: currentStep,
+      selected_option_index: optionIndex,
+      is_correct: isCorrect,
+    });
+
+    if (isCorrect) {
       setQuizResult("correct");
       setShowSuccessMessage(true);
 
@@ -106,11 +128,24 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
 
   const handleStepClick = (stepIndex: number) => {
     if (stepIndex <= currentStep || completedSteps.includes(stepIndex)) {
+      void sendEvent("mission_step_revisit", {
+        mission_day: mission.day,
+        from_step_index: currentStep,
+        to_step_index: stepIndex,
+      });
       setCurrentStep(stepIndex);
       setSelectedQuizOption(null);
       setQuizResult(null);
       setShowSuccessMessage(false);
     }
+  };
+
+  const handleCompletionContinue = () => {
+    void sendEvent("mission_completion_continue", {
+      mission_day: mission.day,
+      total_steps: totalSteps,
+    });
+    onComplete();
   };
 
   const renderStepContent = (step: MissionStep, index: number) => {
@@ -322,7 +357,7 @@ export function MissionDashboard({ mission, onComplete }: MissionDashboardProps)
             <p className="text-muted-foreground mb-6">
               {getText(mission.title)} {t({ ko: "미션을 완료했습니다!", en: "mission completed!" })}
             </p>
-            <Button size="lg" onClick={onComplete} className="w-full">
+            <Button size="lg" onClick={handleCompletionContinue} className="w-full">
               {t({ ko: "계속하기", en: "Continue" })}
             </Button>
           </div>

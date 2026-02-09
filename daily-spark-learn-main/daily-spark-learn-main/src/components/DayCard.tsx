@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Check, Lock, Play } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { sendEvent } from "@/lib/logger";
 
 type DayStatus = "completed" | "available" | "locked";
 
@@ -15,10 +16,19 @@ interface DayCardProps {
 export function DayCard({ day, title, status, onClick, className }: DayCardProps) {
   const { t } = useLanguage();
   const isClickable = status !== "locked";
+  
+  const handleCardClick = () => {
+    void sendEvent("day_card_click", {
+      day,
+      title,
+      status,
+    });
+    onClick?.();
+  };
 
   return (
     <button
-      onClick={isClickable ? onClick : undefined}
+      onClick={isClickable ? handleCardClick : undefined}
       disabled={!isClickable}
       className={cn(
         "w-full p-6 rounded-2xl text-left",
