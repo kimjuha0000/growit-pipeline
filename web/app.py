@@ -48,6 +48,7 @@ class EventIn(BaseModel):
     event_type: str
     user_id: Optional[str] = None
     anonymous_id: Optional[str] = None
+    event_version: int = Field(default=1, ge=1)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -79,7 +80,9 @@ def collect_event(event: EventIn, auth_user_id: Optional[str] = Depends(_validat
         "event_type": event.event_type,
         "user_id": user_id,
         "anonymous_id": anonymous_id,
-        "metadata": event.metadata,
+        "event_version": event.event_version,
+        # Keep bronze schema stable while preserving all metadata.
+        "metadata_json": json.dumps(event.metadata, ensure_ascii=False, sort_keys=True),
     }
 
     now = datetime.now(timezone.utc)
