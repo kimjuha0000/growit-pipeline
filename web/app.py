@@ -26,6 +26,7 @@ def _parse_cors_origins(raw: str) -> List[str]:
 CORS_ORIGINS = _parse_cors_origins(
     os.getenv("CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080")
 )
+CORS_ALLOW_ORIGIN_REGEX = os.getenv("CORS_ALLOW_ORIGIN_REGEX", r"^https://.*\.vercel\.app$").strip() or None
 
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 MINIO_BUCKET = os.getenv("MINIO_BUCKET", "logs")
@@ -36,6 +37,7 @@ MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    allow_origin_regex=CORS_ALLOW_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
