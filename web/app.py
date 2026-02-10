@@ -17,7 +17,15 @@ app = FastAPI()
 DATA_DIR = os.getenv("DATA_DIR", "/data")
 AUTH_MODE = os.getenv("AUTH_MODE", "off")
 USE_MINIO = os.getenv("USE_MINIO", "false").lower() == "true"
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+
+
+def _parse_cors_origins(raw: str) -> List[str]:
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+CORS_ORIGINS = _parse_cors_origins(
+    os.getenv("CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080")
+)
 
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 MINIO_BUCKET = os.getenv("MINIO_BUCKET", "logs")
