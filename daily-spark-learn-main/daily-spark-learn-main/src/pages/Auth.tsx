@@ -4,23 +4,27 @@ import { Button } from "@/components/ui/button";
 import { Mail, ArrowLeft, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Auth() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate auth - in production, integrate with Supabase
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate("/curriculum");
-    }, 1000);
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("이메일로 로그인 링크를 보냈습니다!");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -57,7 +61,7 @@ export default function Auth() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-2">
                   이메일
@@ -86,8 +90,6 @@ export default function Auth() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  required
-                  minLength={6}
                   className={cn(
                     "w-full px-4 py-3 rounded-xl border-2 border-border bg-background",
                     "focus:outline-none focus:border-primary"
@@ -99,9 +101,9 @@ export default function Auth() {
                 type="submit"
                 size="lg"
                 className="w-full mt-6"
-                disabled={isLoading}
+                disabled={loading}
               >
-                {isLoading ? (
+                {loading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                     처리 중...
