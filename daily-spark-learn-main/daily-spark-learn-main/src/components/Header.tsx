@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { User, LogOut, Clock3, Flame } from "lucide-react";
@@ -7,28 +6,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/translations";
 import { sendEvent } from "@/lib/logger";
-import { supabase } from "@/lib/supabaseClient";
-
-type UserStats = {
-  daily_study_minutes: number | null;
-  current_streak: number | null;
-  last_study_date: string | null;
-};
-
-const getTodayDateString = (): string => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 export function Header() {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { session } = useAuth();
-  const [dailyStudyMinutes, setDailyStudyMinutes] = useState(0);
-  const [currentStreak, setCurrentStreak] = useState(0);
+  const { user, logout } = useAuth();
+
+  // TODO: reconnect with backend user stats API when implemented.
+  const dailyStudyMinutes = 0;
+  const currentStreak = 0;
   
   const handleLogoClick = () => {
     void sendEvent("header_nav_click", {
@@ -55,54 +41,15 @@ export function Header() {
     navigate("/auth");
   };
 
-  const handleSignOutClick = async () => {
+  const handleSignOutClick = () => {
     void sendEvent("header_nav_click", {
       target: "signout",
       component: "Header",
       button_text: t({ ko: "로그아웃", en: "Logout" }),
     });
-    await supabase.auth.signOut();
+    logout();
     navigate("/");
   };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadUserStats = async () => {
-      if (!session?.user) {
-        if (!isMounted) return;
-        setDailyStudyMinutes(0);
-        setCurrentStreak(0);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("user_stats")
-        .select("daily_study_minutes,current_streak,last_study_date")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      if (!isMounted || error || !data) {
-        setDailyStudyMinutes(0);
-        setCurrentStreak(0);
-        return;
-      }
-
-      const userStats = data as UserStats;
-      const today = getTodayDateString();
-      const lastStudyDate = (userStats.last_study_date ?? "").slice(0, 10);
-      const isTodayStudy = lastStudyDate === today;
-
-      setDailyStudyMinutes(isTodayStudy ? Number(userStats.daily_study_minutes ?? 0) : 0);
-      setCurrentStreak(Number(userStats.current_streak ?? 0));
-    };
-
-    void loadUserStats();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [session?.user?.id]);
 
   return (
     <header className="w-full border-b border-border bg-background">
@@ -125,7 +72,7 @@ export function Header() {
           >
             {t(translations.header.learn)}
           </Button>
-          {session && (
+          {user && (
             <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-2 py-1.5">
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock3 className="h-3.5 w-3.5" />
@@ -138,7 +85,7 @@ export function Header() {
               </span>
             </div>
           )}
-          {session ? (
+          {user ? (
             <Button
               variant="outline"
               size="sm"

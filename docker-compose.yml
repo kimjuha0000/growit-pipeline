@@ -1,4 +1,20 @@
 services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: growit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d growit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   init-perms:
     image: alpine:3.18
     command: >-
@@ -17,9 +33,9 @@ services:
       MINIO_BUCKET: logs
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
-      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
-      SUPABASE_ISSUER: ${SUPABASE_ISSUER:-}
-      SUPABASE_AUD: ${SUPABASE_AUD:-}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@postgres:5432/growit}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-in-production}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
     ports:
       - "${WEB_PORT:-3000}:3000"
     volumes:
@@ -30,6 +46,8 @@ services:
         condition: service_completed_successfully
       minio:
         condition: service_started
+      postgres:
+        condition: service_healthy
 
   minio:
     image: minio/minio:latest
@@ -128,3 +146,6 @@ services:
       && airflow users create --username ${AIRFLOW_ADMIN_USER:-admin} --password ${AIRFLOW_ADMIN_PASSWORD:-admin} --firstname Admin --lastname User --role Admin --email admin@example.com || true
       && python -c 'import sqlite3; conn=sqlite3.connect(\"/opt/airflow/airflow.db\"); cur=conn.cursor(); cur.execute(\"SELECT id FROM connection WHERE conn_id = ?\", (\"spark_default\",)); row=cur.fetchone(); (cur.execute(\"UPDATE connection SET conn_type = ?, host = ?, port = ? WHERE conn_id = ?\", (\"spark\", \"spark://spark-master\", 7077, \"spark_default\")) if row else cur.execute(\"INSERT INTO connection (conn_id, conn_type, host, port) VALUES (?, ?, ?, ?)\", (\"spark_default\", \"spark\", \"spark://spark-master\", 7077))); conn.commit(); conn.close()'
       ; airflow scheduler & airflow webserver"
+
+volumes:
+  postgres_data:

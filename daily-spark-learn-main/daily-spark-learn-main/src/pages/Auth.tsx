@@ -1,30 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Mail, ArrowLeft, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Auth() {
   const navigate = useNavigate();
+  const { user, login, signup, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleLogin = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setLoading(true);
+  useEffect(() => {
+    if (user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
-    const { error } = await supabase.auth.signInWithOtp({ email });
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+
+    const authAction = isSignUp ? signup : login;
+    const { error } = await authAction(email, password);
     if (error) {
-      alert(error.message);
+      alert(error);
     } else {
-      alert("이메일로 로그인 링크를 보냈습니다!");
+      navigate("/", { replace: true });
     }
 
-    setLoading(false);
+    setIsSubmitting(false);
   };
 
   return (
@@ -61,7 +69,7 @@ export default function Auth() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-2">
                   이메일
@@ -90,6 +98,8 @@ export default function Auth() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  required
+                  minLength={6}
                   className={cn(
                     "w-full px-4 py-3 rounded-xl border-2 border-border bg-background",
                     "focus:outline-none focus:border-primary"
@@ -101,9 +111,9 @@ export default function Auth() {
                 type="submit"
                 size="lg"
                 className="w-full mt-6"
-                disabled={loading}
+                disabled={isSubmitting || isLoading}
               >
-                {loading ? (
+                {isSubmitting || isLoading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                     처리 중...

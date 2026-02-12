@@ -6,10 +6,17 @@ from typing import Any, Dict, List, Optional
 
 import boto3
 from botocore.config import Config
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from filelock import FileLock
+from jose import JWTError, jwt
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from database import Base, engine, get_db
+from models import User
+from security import ALGORITHM, SECRET_KEY, create_access_token, get_password_hash, verify_password
 
 app = FastAPI()
 
@@ -32,6 +39,7 @@ MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 MINIO_BUCKET = os.getenv("MINIO_BUCKET", "logs")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # CORS Middleware
 app.add_middleware(
@@ -52,15 +60,114 @@ class EventIn(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
+class SignupIn(BaseModel):
+    email: str = Field(min_length=3, max_length=255)
+    password: str = Field(min_length=6, max_length=128)
+
+
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def _serialize_user(user: User) -> Dict[str, Any]:
+    return {
+        "id": user.id,
+        "email": user.email,
+        "is_active": user.is_active,
+    }
+
+
 def _validate_auth(_authorization: Optional[str] = Header(default=None)) -> Optional[str]:
     if AUTH_MODE != "off":
         raise HTTPException(status_code=501, detail="Auth not enabled in this scope")
     return None
 
 
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        subject = payload.get("sub")
+        if subject is None:
+            raise credentials_exception
+        user_id = int(subject)
+    except (JWTError, ValueError):
+        raise credentials_exception
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise credentials_exception
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return user
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    Base.metadata.create_all(bind=engine)
+
+
 @app.get("/api/health")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/api/auth/signup")
+def signup(payload: SignupIn, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    email = _normalize_email(payload.email)
+    password = payload.password
+
+    if "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email required")
+
+    existing_user = db.query(User).filter(User.email == email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    user = User(
+        email=email,
+        hashed_password=get_password_hash(password),
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": _serialize_user(user),
+    }
+
+
+@app.post("/api/auth/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    email = _normalize_email(form_data.username)
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": _serialize_user(user),
+    }
+
+
+@app.get("/api/users/me")
+def read_users_me(current_user: User = Depends(get_current_user)) -> Dict[str, Any]:
+    return _serialize_user(current_user)
 
 
 @app.post("/api/events")
