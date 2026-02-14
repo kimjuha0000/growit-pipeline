@@ -8,15 +8,16 @@ import boto3
 from botocore.config import Config
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from filelock import FileLock
-from jose import JWTError, jwt
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from auth import get_current_user
 from database import Base, engine, get_db
 from models import User
-from security import ALGORITHM, SECRET_KEY, create_access_token, get_password_hash, verify_password
+from routers.study import router as study_router
+from security import create_access_token, get_password_hash, verify_password
 
 app = FastAPI()
 
@@ -39,7 +40,6 @@ MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
 MINIO_BUCKET = os.getenv("MINIO_BUCKET", "logs")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # CORS Middleware
 app.add_middleware(
@@ -50,6 +50,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(study_router)
 
 
 class EventIn(BaseModel):
@@ -81,29 +82,6 @@ def _validate_auth(_authorization: Optional[str] = Header(default=None)) -> Opti
     if AUTH_MODE != "off":
         raise HTTPException(status_code=501, detail="Auth not enabled in this scope")
     return None
-
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        subject = payload.get("sub")
-        if subject is None:
-            raise credentials_exception
-        user_id = int(subject)
-    except (JWTError, ValueError):
-        raise credentials_exception
-
-    user = db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        raise credentials_exception
-    if not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return user
 
 
 @app.on_event("startup")

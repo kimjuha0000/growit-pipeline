@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { GameSelector } from "@/components/GameSelector";
@@ -7,19 +7,55 @@ import { figmaCurriculum, completeDay, getProgress } from "@/lib/curriculum";
 import { ArrowLeft, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { type LocalizedText } from "@/lib/missionContent";
+
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "").trim().replace(/\/+$/, "");
+const STUDY_STATS_REFRESH_EVENT = "study-stats:refresh";
+
+const buildApiUrl = (path: string): string => {
+  const fallbackBase = typeof window !== "undefined" ? window.location.origin : "";
+  const baseUrl = API_BASE_URL || fallbackBase;
+  return `${baseUrl}${path}`;
+};
 
 export default function Learn() {
   const { curriculumId, day } = useParams();
   const navigate = useNavigate();
   const { language, t } = useLanguage();
+  const { user, token } = useAuth();
   const [showCelebration, setShowCelebration] = useState(false);
+  const [hasReportedProgress, setHasReportedProgress] = useState(false);
+  const studySessionStartRef = useRef<number>(Date.now());
 
   const dayNumber = parseInt(day || "1", 10);
   const curriculum = figmaCurriculum;
   const currentDay = curriculum.days.find((d) => d.day === dayNumber);
 
   const getText = (text: LocalizedText): string => text[language];
+
+  const reportStudyProgress = useCallback(
+    async (minutes: number) => {
+      if (!user || !token) return;
+
+      try {
+        const response = await fetch(buildApiUrl("/api/study/progress"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ minutes }),
+        });
+
+        if (!response.ok) return;
+        window.dispatchEvent(new Event(STUDY_STATS_REFRESH_EVENT));
+      } catch {
+        // Intentionally ignore network failures so learning flow is not blocked.
+      }
+    },
+    [token, user],
+  );
 
   useEffect(() => {
     const progress = getProgress(curriculum.id);
@@ -30,6 +66,11 @@ export default function Learn() {
     }
   }, [dayNumber, curriculum.id, navigate]);
 
+  useEffect(() => {
+    setHasReportedProgress(false);
+    studySessionStartRef.current = Date.now();
+  }, [curriculumId, dayNumber]);
+
   if (!currentDay) {
     return null;
   }
@@ -37,6 +78,12 @@ export default function Learn() {
   const handleMissionComplete = () => {
     completeDay(curriculum.id, dayNumber);
     setShowCelebration(true);
+
+    if (!hasReportedProgress) {
+      setHasReportedProgress(true);
+      const elapsedMinutes = Math.max(1, Math.ceil((Date.now() - studySessionStartRef.current) / 60000));
+      void reportStudyProgress(elapsedMinutes);
+    }
   };
 
   const handleCelebrationContinue = () => {
